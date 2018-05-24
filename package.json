@@ -15,5 +15,8 @@
   "bugs": {
     "url": "https://github.com/jackiejou/minesweeper/issues"
   },
-  "homepage": "https://github.com/jackiejou/minesweeper#readme"
+  "homepage": "https://github.com/jackiejou/minesweeper#readme",
+  "dependencies": {
+    "prompt": "^1.0.0"
+  }
 }

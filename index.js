@@ -1,3 +1,5 @@
+const prompt = require('prompt');
+
 class Minesweeper {
   constructor(row, col) {
     this.row = row;
@@ -14,17 +16,9 @@ class Minesweeper {
         arr.push(0);
       }
       this.board.push(arr);
-      this.gameBoard.push(arr.map(ele => '_'));
+      this.gameBoard.push(arr.map(ele => '-'));
     }
-    this.showBoard();
-  }
-  showBoard() {
-    this.gameBoard.forEach(row => {
-      console.log(row.join(' '));
-    });
-  }
-  plantMines() {
-    // 15 percent bombs, ceil
+    // Plant mines, at 15 percent bomb rate, ceil
     let cells = this.cellsCount;
     let mines = this.minesCount;
     console.log(`there are ${mines} mines`);
@@ -38,6 +32,12 @@ class Minesweeper {
         cells--;
       }
     }
+    this.showBoard();
+  }
+  showBoard() {
+    this.gameBoard.forEach(row => {
+      console.log(row.join(' '));
+    });
   }
   changeAdjacent(row, col, func) {
     func(row, col - 1); // left
@@ -55,22 +55,68 @@ class Minesweeper {
     }
   }
   reveal(row, col) {
-    if (row < this.row && col < this.col && row >= 0 && col >= 0 && this.gameBoard[row][col] === '_') {
+    if (row < this.row && col < this.col && row >= 0 && col >= 0 && this.gameBoard[row][col] === '-') {
       this.gameBoard[row][col] = this.board[row][col];
       if (this.board[row][col] === 0) this.changeAdjacent(row, col, this.reveal.bind(this));
       this.cellsCount--;
     }
   }
-  makeMove (row, col) {
-    this.reveal(row, col);
-    this.showBoard();
-    console.log(`there are ${this.cellsCount} cells left`);
-    if (this.gameBoard[row][col] === 9) console.log('you lost!');
-    if (this.cellsCount === this.minesCount) console.log('you won!');
+  makeMove () {
+    console.log('Make a move!');
+    prompt.get([
+      {
+        name: 'row',
+        required: true,
+        conform: (value) => {
+          return value > 0 && value <= this.col;
+        },
+        message: `Row number must be between 1 and ${this.row}`,
+      },
+      {
+        name: 'col',
+        required: true,
+        conform: (value) => {
+          return value > 0 && value <= this.col;
+        },
+        message: `Row number must be between 1 and ${this.row}`,
+      }
+    ], (err, results) => {
+      this.reveal(+results.row - 1, +results.col - 1);
+      this.showBoard();
+      console.log(`there are ${this.cellsCount} cells and ${this.minesCount} mines left`);
+      if (this.gameBoard[+results.row - 1][+results.col - 1] === 9) {
+        console.log('You hit a mine! You lose!');
+      } else if (this.cellsCount === this.minesCount) {
+        console.log('You won!');
+      } else {
+        this.makeMove();
+      }
+    })
   }
 }
-let test = new Minesweeper(10,10);
-test.initialize();
-test.plantMines();
-console.log('move 5,5');
-test.makeMove(5,5);
+
+prompt.start();
+let boardSchema = {
+  properties: {
+    rowLength: {
+      conform: (value) => {
+        return value > 0 && value <= 20;
+      },
+      message: 'Length must be between 1 and 20',
+      required: true
+    },
+    colLength: {
+      conform: (value) => {
+        return value > 0 && value <= 20
+      },
+      message: 'Width must be between 1 and 20',
+      required: true
+    }
+  }
+}
+
+prompt.get(boardSchema, (err, results) => {
+  let game = new Minesweeper(+results.rowLength, +results.colLength);
+  game.initialize();
+  game.makeMove();
+});
